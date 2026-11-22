@@ -412,7 +412,7 @@ function muat(){
   const kode = baca("pk_kode") || "";
   const gagal = e => { $("#segar").classList.remove("putar"); $("#waktu").innerHTML = '<span class="galat">Gagal memuat</span>';
     if (!D) layarKode("Gagal memuat: " + (e && e.message || e)); };
-  const ok = d => { $("#segar").classList.remove("putar"); if (d && d.galat === "kode") return layarKode(kode ? "Kode salah atau terkunci sementara. Coba lagi." : ""); terima(d); };
+  const ok = d => { $("#segar").classList.remove("putar"); if (d && d.galat === "kode") return layarKode(kode ? "Kode salah atau terkunci sementara. Coba lagi." : ""); terima(d); if (d && d.trx) simpan("pk_cache", JSON.stringify(d)); };
   if (window.google && google.script && google.script.run) {
     google.script.run.withSuccessHandler(ok).withFailureHandler(gagal).ambilData(kode);
   } else if (window.CONTOH) { setTimeout(() => ok(window.CONTOH), 150); }
@@ -835,6 +835,8 @@ function buatGrafik(kat){
 }
 
 window.pkChartSiap = () => { if (D && hal === "grafik") gambar(); };
+/* buka cepat: tampilkan data terakhir yang tersimpan di perangkat, lalu segarkan dari Google Sheets di belakang layar */
+try { const c = baca("pk_cache"); if (c) { const d0 = JSON.parse(c); if (d0 && d0.trx) { terima(d0); $("#waktu").textContent = "Update " + d0.waktu + " · menyegarkan…"; } } } catch(e) {}
 muat();
 })();
 </script>
