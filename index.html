@@ -163,14 +163,14 @@ h2 small{text-transform:none;letter-spacing:0;font-weight:600;color:var(--faint)
 .inv-kepala b{display:block;font-size:15px}
 .inv-kepala span{font-size:12px;color:var(--muted);font-weight:600}
 .inv-kepala strong{font-size:16px;text-align:right}
-.inv-kepala strong small{display:block;font-size:11.5px;font-weight:700}
+.inv-kepala strong small{display:block;font-size:11.5px;font-weight:700;white-space:nowrap}
 .it{display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid rgba(255,255,255,.75)}
 .it>div:not(.logo){flex:1;min-width:0}
 .it>div b{display:block;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .it>div span{font-size:11.5px;color:var(--muted)}
-.it .kanan-it{text-align:right;flex:none}
+.it>div.kanan-it{text-align:right;flex:0 0 auto;min-width:auto;max-width:66%}
 .it .kanan-it strong{display:block;font-size:13.5px}
-.pl{display:inline-block;font-size:11px;font-weight:800;padding:2px 7px;border-radius:99px;margin-top:2px}
+.pl{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:99px;margin-top:2px;white-space:nowrap}
 .pl.naik{background:var(--mint-soft);color:#23946f}
 .pl.turun{background:var(--rose-soft);color:#c24a65}
 .pl.netral{background:rgba(120,110,160,.12);color:var(--muted)}
@@ -443,13 +443,14 @@ function gambar(){
 /* ---------- daftar investasi (dipakai Beranda & halaman Investasi) ---------- */
 function grupInvestasi(){
   const I = D.investasi || {}, jum = a => (a || []).reduce((s, x) => s + (x.nilai || 0), 0);
+  const I2 = Object.assign({}, I, { deposito: (I.deposito || []).map(x => Object.assign({}, x, { modal: x.pokok || 0, untung: (x.nilai || 0) - (x.pokok || 0) })) });
   const jumU = a => (a || []).reduce((s, x) => s + (x.modal ? (x.untung || 0) : 0), 0);
   const jumM = a => (a || []).reduce((s, x) => s + (x.modal || 0), 0);
   return [
     { id:"crypto", nama:"Crypto", ico:"🪙", bg:"var(--amber-soft)", warna:"#ffc27a", isi:I.crypto || [] },
     { id:"saham", nama:"Saham", ico:"📈", bg:"var(--sky-soft)", warna:"#8cc4f0", isi:I.saham || [] },
     { id:"bibit", nama:"Dana Darurat & Pensiun", sub:"Reksa dana di Bibit", ico:"🛟", bg:"var(--mint-soft)", warna:"#8ad8bf", isi:I.bibit || [] },
-    { id:"deposito", nama:"Deposito", ico:"🏦", bg:"var(--lav-soft)", warna:"#a99bf2", isi:I.deposito || [] },
+    { id:"deposito", nama:"Deposito", ico:"🏦", bg:"var(--lav-soft)", warna:"#a99bf2", isi:I2.deposito },
     { id:"emas", nama:"Emas Digital", ico:"🥇", bg:"#fff1c9", warna:"#f1d27a", isi:I.emas || [] }
   ].map(g => ({ ...g, total: jum(g.isi), untung: jumU(g.isi), modal: jumM(g.isi) })).filter(g => g.isi.length);
 }
@@ -495,10 +496,16 @@ function saldo(){
 }
 
 /* ---------- Investasi ---------- */
+/* untung/rugi: nominal Rp + persen, mis. "−Rp357.506 (−9,3%)" */
+const plTeks = (untung, p) => {
+  const naik = (untung || 0) >= 0, tanda = naik ? "+" : "−";
+  if (tutup) return `${tanda}Rp ${BINTANG} (${tanda}**%)`;
+  const nom = tanda + "Rp" + Math.round(Math.abs(untung || 0)).toLocaleString("id-ID");
+  return p == null ? nom : `${nom} (${tanda}${desimal(Math.abs(p * 100), 1)}%)`;
+};
 const plChip = (p, untung, adaModal) => {
-  if (!adaModal || p == null) return `<span class="pl netral">${adaModal === false ? "modal ?" : "–"}</span>`;
-  if (tutup) return `<span class="pl ${p >= 0 ? "naik" : "turun"}">${p >= 0 ? "▲" : "▼"} **%</span>`;
-  return `<span class="pl ${p >= 0 ? "naik" : "turun"}">${p >= 0 ? "▲" : "▼"} ${desimal(Math.abs(p*100), 1)}%</span>`;
+  if (!adaModal) return `<span class="pl netral">${adaModal === false ? "modal ?" : "–"}</span>`;
+  return `<span class="pl ${(untung || 0) >= 0 ? "naik" : "turun"}">${plTeks(untung, p)}</span>`;
 };
 function rincian(g, x){
   if (g.id === "crypto") {
@@ -521,7 +528,7 @@ function halInvestasi(){
   <section class="kaca hero">
     <div class="label">Total harta investasi</div>
     <div class="besar num" style="margin-bottom:6px">${rp(total)}</div>
-    <div style="font-size:12.5px;font-weight:700;margin-bottom:12px" class="${untung >= 0 ? "masuk" : "keluar"}">${tutup ? "Untung/rugi " + BINTANG : (untung >= 0 ? "▲ +" : "▼ ") + rp(untung).replace("−","") + (modal ? ` (${desimal(untung/modal*100,1)}%)` : "")} <span style="color:var(--faint);font-weight:600">dari aset yang modalnya tercatat</span></div>
+    <div style="font-size:12.5px;font-weight:700;margin-bottom:12px" class="${untung >= 0 ? "masuk" : "keluar"}">${untung >= 0 ? "▲" : "▼"} ${plTeks(untung, modal ? untung / modal : null)} <span style="color:var(--faint);font-weight:600">dari aset yang modalnya tercatat</span></div>
     <div class="porsi">${gi.map(g => `<i style="width:${g.total/total*100}%;background:${g.warna}"></i>`).join("")}</div>
     <div class="chips-porsi">${gi.map(g => `<span><i class="dot" style="background:${g.warna}"></i>${esc(g.nama.split(" ")[0])} ${desimal(g.total/total*100, 0)}%</span>`).join("")}</div>
   </section>
@@ -533,9 +540,9 @@ function halInvestasi(){
     return `<section class="kaca">
       <div class="inv-kepala"><div class="ikon-grup" style="background:${g.bg}">${g.ico}</div>
         <div><b>${esc(g.nama)}</b><span>${g.isi.length} aset${g.sub ? " · " + esc(g.sub) : ""} · ${desimal(g.total/total*100, 1)}%</span></div>
-        <strong class="num">${singkat(g.total)}${g.modal ? `<small class="${g.untung >= 0 ? "masuk" : "keluar"}">${tutup ? "**%" : (g.untung >= 0 ? "+" : "−") + desimal(Math.abs(pg*100),1) + "%"}</small>` : ""}</strong></div>
-      ${isi.map(x => { const r = rincian(g, x), adaModal = g.id === "bibit" ? undefined : g.id === "deposito" ? true : !!x.modal;
-        const p = g.id === "deposito" ? (x.pokok ? (x.nilai - x.pokok) / x.pokok : null) : x.persen;
+        <strong class="num">${singkat(g.total)}${g.modal ? `<small class="${g.untung >= 0 ? "masuk" : "keluar"}">${plTeks(g.untung, pg)}</small>` : ""}</strong></div>
+      ${isi.map(x => { const r = rincian(g, x), adaModal = g.id === "bibit" ? undefined : !!x.modal;
+        const p = x.persen != null ? x.persen : (x.modal ? (x.untung || 0) / x.modal : null);
         return `<div class="it">${logo(r.kunci, true)}<div><b>${r.judul}</b><span>${r.sub}</span></div>
           <div class="kanan-it"><strong class="num">${rp(x.nilai)}</strong>${g.id === "bibit" ? "" : plChip(p, x.untung, adaModal)}</div></div>`; }).join("")}
       ${lebih ? `<button class="lagi" id="cryptoLagi" type="button">Tampilkan ${lebih} koin lagi</button>` : ""}
