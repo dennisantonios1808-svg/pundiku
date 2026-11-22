@@ -43,7 +43,7 @@ main.masuk-kanan{animation:dariKanan .32s cubic-bezier(.2,.8,.2,1)}
 main.masuk-kiri{animation:dariKiri .32s cubic-bezier(.2,.8,.2,1)}
 @keyframes dariKanan{from{opacity:.2;transform:translateX(36px)}}
 @keyframes dariKiri{from{opacity:.2;transform:translateX(-36px)}}
-@media (min-width:980px){.wadah{max-width:1000px}main.dua{display:grid;grid-template-columns:1fr 1fr;align-items:start}.lebar{grid-column:1/-1}}
+
 
 .kaca{background:var(--glass);border:1px solid var(--edge);border-radius:var(--r);box-shadow:var(--shadow);
   -webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%);padding:18px}
@@ -221,6 +221,48 @@ h2 small{text-transform:none;letter-spacing:0;font-weight:600;color:var(--faint)
 .atur label{font-size:12px;font-weight:700;color:var(--muted)}
 .atur .cari{margin:4px 0 0}
 .utama{border:0;border-radius:14px;padding:13px;font:inherit;font-weight:800;color:#fff;background:linear-gradient(135deg,#a08cf0,#8b78e6);cursor:pointer;box-shadow:0 8px 20px rgba(139,120,230,.35)}
+
+/* konverter mata uang */
+.konv h2{margin-bottom:10px}
+.konv-in{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.62);border:1px solid var(--edge);border-radius:16px;padding:4px 14px}
+.konv-in span{font-weight:800;color:var(--muted)}
+.konv-in input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:22px;font-weight:800;color:var(--ink);padding:9px 0;outline:none;font-variant-numeric:tabular-nums}
+.konv-chip{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+.konv-chip button{border:1px solid var(--edge);background:var(--glass);border-radius:999px;padding:6px 12px;font:inherit;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer}
+.konv-chip button:active{background:var(--lav-soft);color:var(--lav)}
+.konv-hasil{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.kv{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.5);border:1px solid var(--edge);border-radius:16px;padding:10px 12px}
+.kv .bendera{font-size:26px;line-height:1}
+.kv .nm{flex:1;min-width:0}
+.kv .nm b{display:block;font-size:13.5px}
+.kv .nm span{display:block;font-size:11.5px;color:var(--muted);line-height:1.35}
+.kv .nilai{font-size:17px;font-weight:800;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.konv-ket{margin-top:10px;font-size:11.5px;color:var(--faint);font-weight:600;line-height:1.45}
+
+/* panel samping (hanya desktop) */
+.sisi{display:none}
+
+/* ===== layar lebar: laptop / desktop, bilah tab pindah ke samping ===== */
+@media (min-width:900px){
+  body{padding:max(20px,env(safe-area-inset-top)) 32px 48px 292px}
+  .wadah{max-width:1060px;margin:0}
+  main.dua{display:grid;grid-template-columns:1fr 1fr;align-items:start}
+  main:not(.dua){max-width:760px}
+  .lebar{grid-column:1/-1}
+  .merek img,.merek b{display:none}
+  .merek span{font-size:13px;font-weight:600}
+  .sisi{display:flex;align-items:center;gap:12px;position:fixed;z-index:15;left:16px;top:16px;bottom:16px;width:248px;padding:18px 18px;border-radius:30px;align-items:flex-start;
+    background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.34));border:1px solid var(--edge);box-shadow:var(--shadow);
+    -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+  .sisi img{width:44px;height:44px;border-radius:13px;box-shadow:0 6px 16px rgba(110,90,170,.22)}
+  .sisi b{display:block;font-size:20px;font-weight:800;letter-spacing:-.01em;line-height:1.1}
+  .sisi span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+  .tabbar{left:24px;top:94px;bottom:auto;transform:none;width:232px;grid-template-columns:1fr;grid-auto-rows:54px;border-radius:26px}
+  .tab{flex-direction:row;justify-content:flex-start;gap:14px;padding:0 18px;font-size:14px;border-radius:22px}
+  .tab svg{width:21px;height:21px;flex:none}
+  .pil{top:5px;left:5px;right:5px;bottom:auto;width:auto;height:54px;border-radius:22px}
+  .jalan{margin-bottom:12px}
+}
 </style>
 </head>
 <body>
@@ -237,6 +279,7 @@ h2 small{text-transform:none;letter-spacing:0;font-weight:600;color:var(--faint)
   <div class="jalan" id="jalan" hidden><div class="pita" id="pita"></div></div>
   <main id="app"><div class="muat"></div><div class="muat"></div></main>
 </div>
+<aside class="sisi" aria-hidden="true"><img id="sisiLogo" alt=""><div><b>Pundiku</b><span>Buku kas pribadi</span></div></aside>
 <div class="tirai" id="tirai"><div class="kaca notif" id="notif"></div></div>
 <nav class="tabbar" id="tabbar" aria-label="Halaman">
   <span class="pil" id="pil"></span>
@@ -391,7 +434,7 @@ function terima(d){
   const ada = [...new Set(d.trx.map(t => bulanDari(t.tgl)).filter(Boolean))].sort();
   const kini = bulanDari(d.hariIni || "");
   if (!bulanPilih || !ada.includes(bulanPilih)) bulanPilih = ada.includes(kini) ? kini : ada[ada.length-1];
-  D.bulanAda = ada;
+  D.bulanAda = ada; terakhirMuat = Date.now();
   $("#waktu").textContent = "Update " + d.waktu;
   gambar(); notifikasi();
 }
@@ -434,7 +477,7 @@ function pindah(baru, arah){
 function gambar(){
   Object.keys(charts).forEach(k => { charts[k].destroy(); delete charts[k]; });
   geserPil();
-  app.className = hal === "grafik" ? "dua" : "";
+  app.className = (hal === "grafik" || hal === "beranda") ? "dua" : "";
   $("#jalan").hidden = hal !== "beranda";
   ({ beranda, saldo, investasi: halInvestasi, grafik: halGrafik, transaksi })[hal]();
   app.querySelectorAll("[data-b]").forEach(el => el.onclick = () => { bulanPilih = el.dataset.b; batasTampil = 40; gambar(); });
@@ -463,7 +506,7 @@ function beranda(){
   const investasi = gi.length ? gi.reduce((s, g) => s + g.total, 0)
     : (D.komposisi||[]).filter(a => /Crypto|Saham|Emas|Deposito/i.test(a.nama)).reduce((s,a) => s + a.nilai, 0) + (k.bibit||0);
   app.innerHTML = `
-  <section class="kaca hero">
+  <section class="kaca hero lebar">
     <div class="label">Kekayaan bersih</div>
     <div class="besar num">${rp(k.bersih)}</div>
     <div class="mini">
@@ -478,8 +521,50 @@ function beranda(){
     <div class="kaca k"><span><i class="dot" style="background:var(--amber)"></i>Untung kurs</span><b class="num ${b.kurs >= 0 ? "masuk" : "keluar"}">${rp(b.kurs)}</b><em>Rp${(D.kurs||0).toLocaleString("id-ID",{maximumFractionDigits:2})} / CNY</em></div>
     <div class="kaca k"><span><i class="dot" style="background:var(--lav)"></i>Anggaran terpakai</span><b class="num">${persen(pakai)}</b>
       <div class="bar"><i class="${kelasBar(pakai)}" style="width:${Math.min(100, pakai*100)}%"></i></div><em class="num">${singkat(b.dalamAnggaran)} dari ${singkat(D.batasTotal)}</em></div>
-  </section>`;
+  </section>
+  ${konverterHtml()}`;
+  pasangKonverter();
 }
+
+
+/* ---------- konverter mata uang: Rupiah → RMB, SGD, USD, MYR (kurs Google Finance dari sheet, diperbarui tiap jam) ---------- */
+const MATA_KONV = [["CNY","🇨🇳","RMB (Yuan Tiongkok)","¥"],["SGD","🇸🇬","Dolar Singapura","S$"],["USD","🇺🇸","Dolar Amerika","$"],["MYR","🇲🇾","Ringgit Malaysia","RM"]];
+const kursKonv = () => { const k = Object.assign({}, D && D.kursMulti || {}); if (!k.CNY && D && D.kurs) k.CNY = D.kurs; return k; };
+const formatRibuan = n => n ? Math.round(n).toLocaleString("id-ID") : "";
+function konverterHtml(){
+  const k = kursKonv();
+  const awal = +(baca("pk_konv") || 1000000) || 1000000;
+  return `<section class="kaca konv" id="konv"><h2>Konversi mata uang <small>Rupiah ke RMB, SGD, USD, MYR</small></h2>
+    <div class="konv-in"><span>Rp</span><input id="konvRp" type="text" inputmode="numeric" autocomplete="off" value="${formatRibuan(awal)}" aria-label="Nominal rupiah"></div>
+    <div class="konv-chip">${[100000,500000,1000000,5000000,10000000].map(n => `<button type="button" data-n="${n}">${n >= 1e6 ? (n/1e6) + " jt" : (n/1e3) + " rb"}</button>`).join("")}</div>
+    <div class="konv-hasil">${MATA_KONV.map(([kd, bd, nm, sm]) => `<div class="kv"><div class="bendera">${bd}</div>
+      <div class="nm"><b>${kd} <small style="font-weight:600;color:var(--muted)">${nm}</small></b><span>${k[kd] ? "Rp" + k[kd].toLocaleString("id-ID", { maximumFractionDigits: 2 }) + " per 1 " + kd : "kurs belum tersedia"}</span></div>
+      <div class="nilai" data-m="${kd}">…</div></div>`).join("")}</div>
+    <div class="konv-ket">Kurs dari Google Finance (mid-market), diperbarui otomatis tiap 1 jam. Dimuat ${esc(D.waktu || "")}. Kurs di bank atau money changer biasanya sedikit berbeda.</div></section>`;
+}
+function hitungKonverter(){
+  const inp = $("#konvRp"); if (!inp) return;
+  const rpv = +(inp.value.replace(/\D/g, "")) || 0;
+  const k = kursKonv();
+  MATA_KONV.forEach(([kd, , , sm]) => {
+    const el = app.querySelector('.nilai[data-m="' + kd + '"]'); if (!el) return;
+    el.textContent = k[kd] ? sm + " " + (rpv / k[kd]).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—";
+  });
+}
+function pasangKonverter(){
+  const inp = $("#konvRp"); if (!inp) return;
+  inp.oninput = () => {
+    const n = +(inp.value.replace(/\D/g, "")) || 0;
+    inp.value = formatRibuan(n); simpan("pk_konv", String(n)); hitungKonverter();
+  };
+  app.querySelectorAll(".konv-chip button").forEach(b => b.onclick = () => { inp.value = formatRibuan(+b.dataset.n); simpan("pk_konv", b.dataset.n); hitungKonverter(); });
+  hitungKonverter();
+}
+
+/* muat ulang otomatis tiap 1 jam supaya kurs ikut segar */
+let terakhirMuat = Date.now();
+setInterval(() => { if (!document.hidden && D) muat(); }, 3600000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && D && Date.now() - terakhirMuat > 3600000) muat(); });
 
 /* ---------- Saldo ---------- */
 function saldo(){
@@ -667,36 +752,39 @@ $("#jalan").addEventListener("pointerdown", () => $("#jalan").classList.add("jed
 
 /* ---------- bilah tab: tap atau geser gelembungnya seperti iPhone ---------- */
 const bar = $("#tabbar"), pil = $("#pil"), tabs = [...bar.querySelectorAll(".tab")];
-const lebarTab = () => (bar.clientWidth - 10) / HAL.length;
+const vert = () => window.matchMedia("(min-width:900px)").matches;
+const lebarTab = () => vert() ? tabs[0].offsetHeight : (bar.clientWidth - 10) / HAL.length;
+{ const lg = $("#sisiLogo"), im = $(".merek img"); if (lg && im) lg.src = im.src; }
 function geserPil(){
   const i = HAL.indexOf(hal);
-  pil.style.transform = `translateX(${i * lebarTab()}px)`;
+  pil.style.transform = (vert() ? "translateY(" : "translateX(") + (i * lebarTab()) + "px)";
   tabs.forEach((t, k) => t.classList.toggle("on", k === i));
 }
 window.addEventListener("resize", geserPil);
 let seret = null;
 bar.addEventListener("pointerdown", e => {
-  seret = { x0: e.clientX, aktif: false, id: e.pointerId };
+  seret = { x0: vert() ? e.clientY : e.clientX, aktif: false, id: e.pointerId };
   try { bar.setPointerCapture(e.pointerId); } catch(err) {}
 });
 bar.addEventListener("pointermove", e => {
   if (!seret) return;
-  if (!seret.aktif && Math.abs(e.clientX - seret.x0) > 6) { seret.aktif = true; bar.classList.add("seret"); }
+  if (!seret.aktif && Math.abs((vert() ? e.clientY : e.clientX) - seret.x0) > 6) { seret.aktif = true; bar.classList.add("seret"); }
   if (!seret.aktif) return;
-  const kotak = bar.getBoundingClientRect(), w = lebarTab();
-  const x = Math.max(0, Math.min(kotak.width - 10 - w, e.clientX - kotak.left - 5 - w / 2));
-  pil.style.transform = `translateX(${x}px) scale(1.1,1.14)`;
+  const kotak = bar.getBoundingClientRect(), w = lebarTab(), v = vert();
+  const x = Math.max(0, Math.min((v ? kotak.height : kotak.width) - 10 - w, (v ? e.clientY - kotak.top : e.clientX - kotak.left) - 5 - w / 2));
+  pil.style.transform = v ? `translateY(${x}px) scale(1.04,1.1)` : `translateX(${x}px) scale(1.1,1.14)`;
   const dekat = Math.round(x / w);
   tabs.forEach((t, k) => t.classList.toggle("dekat", k === dekat));
 });
 function lepas(e){
   if (!seret) return;
-  const kotak = bar.getBoundingClientRect(), w = lebarTab();
+  const kotak = bar.getBoundingClientRect(), w = lebarTab(), v = vert();
+  const pos = v ? e.clientY - kotak.top : e.clientX - kotak.left;
   let i;
   if (seret.aktif) {
-    const x = Math.max(0, Math.min(kotak.width - 10 - w, e.clientX - kotak.left - 5 - w / 2));
+    const x = Math.max(0, Math.min((v ? kotak.height : kotak.width) - 10 - w, pos - 5 - w / 2));
     i = Math.round(x / w);
-  } else i = Math.max(0, Math.min(HAL.length - 1, Math.floor((e.clientX - kotak.left - 5) / w)));
+  } else i = Math.max(0, Math.min(HAL.length - 1, Math.floor((pos - 5) / w)));
   bar.classList.remove("seret"); tabs.forEach(t => t.classList.remove("dekat"));
   seret = null;
   if (HAL[i] !== hal) pindah(HAL[i]); else geserPil();
